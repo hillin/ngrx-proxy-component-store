@@ -1,0 +1,16 @@
+{
+  "name": "ngrx-proxy-component-store",
+  "version": "0.0.1",
+  "author": "hillin",
+  "repository": "https://github.com/hillin/ngrx-proxy-component-store",
+  "description": "A proxy for @ngrx/component-store to reduce boilerplate.",
+  "peerDependencies": {
+    "@angular/common": "^13.0.0",
+    "@angular/core": "^13.0.0",
+    "@ngrx/component-store": "^13.0.0"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "private": false
+}
