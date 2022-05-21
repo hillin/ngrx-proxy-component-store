@@ -1,27 +1,88 @@
-# NgrxProxyComponentStore
+# @ngrx-proxy-component-store
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 13.0.3.
+A proxy for @ngrx/component-store to reduce boilerplate.
 
-## Development server
+This library uses a little bit of proxy magic to drastically reduce the boilerplate code you need to write when using @ngrx/component-store.
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+## Get Started
 
-## Code scaffolding
+```
+npm i ngrx-proxy-component-store
+```
+or 
+```
+yarn i ngrx-proxy-component-store
+```
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+## One Example to Rule Them All
 
-## Build
+Say we have a `HeroState`:
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+```typescript
+export interface HeroState {
+  hp: number;
+  equipment: {
+    weapon: WeaponType;
+  };
+  /* Of course our hero has much more than these! */
+}
+```
 
-## Running unit tests
+And its corresponding `HeroComponentStore`:
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+### Before:
 
-## Running end-to-end tests
+```typescript
+class HeroComponentStore extends ComponentStore<HeroState> {
+  readonly hp$ = this.select(state => state.hp);
+  readonly weapon$ = this.select(state => state.equipment.weapon);
+  readonly setHp = this.updater((state, hp: number) => ({ ...state, hp }));
+  readonly setWeapon = this.updater((state, weapon: WeaponType) => ({
+    ...state,
+    // carefully reduce nested state
+    equipment: { ...state.equipment, weapon },
+  }));
+  /* That's just for two properties. */
+}
+```
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+### After:
+```typescript
+// Note we derive from ProxyComponentStore instead of ComponentStore
+class HeroComponentStore extends ProxyComponentStore<HeroState> {
+  /* NOTHING. REALLY. */
+}
+```
 
-## Further help
+To select or reduce the state, use the `state` proxy:
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+```typescript
+  // returns an Observable<number>
+  const hp$ = this.state.hp$;   
+
+  // Observable<{ weapon: WeaponType }>
+  const equipment$ = this.state.equipment$; 
+
+  // nested state property can be accessed directly
+  const weapon$ = this.state.equipment.weapon$;
+
+  // I lied. hp$ behaves like an Observable, but actaully it's not. 
+  // It also encapsulates an updater:
+  this.state.hp$.update(42);
+
+  // Nested updater, so we don't have to carefully reduce nested state
+  this.state.equipment.weapon$.update(new BFG());
+```
+
+### Alternative Usage
+If for some reason it's not desirable to derive your component store from `ProxyComponentStore`, you can always use the `proxify` function to create a proxy for a component store.
+
+```typescript
+readonly state = proxify(this);
+```
+
+## Features
+- Generate selectors and updaters based on state definition.
+- Support nested state, automatic `undefined` handling.
+  - e.g. for state `{ nested?: { value: string; } }`, `state.nested.value$` returns an `Observer<string | undefined>`; calling `state.nested.value$.update('abc')` will actually reduce the state with `nested` set to `{ value: 'abc' }`.
+- Cache selectors and updaters (so they won't be repeatedly generated).
