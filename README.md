@@ -1,4 +1,4 @@
-# @ngrx-proxy-component-store
+# @ngrx/proxy-component-store
 
 A proxy for @ngrx/component-store to reduce boilerplate.
 
@@ -11,7 +11,7 @@ npm i ngrx-proxy-component-store
 ```
 or 
 ```
-yarn i ngrx-proxy-component-store
+yarn add ngrx-proxy-component-store
 ```
 
 ## One Example to Rule Them All
